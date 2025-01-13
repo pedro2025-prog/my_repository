@@ -1,0 +1,61 @@
+#this code can testing your YOLO model on your target photo. 
+
+from ultralytics import YOLO
+import os
+from pathlib import Path
+import cv2
+
+
+weights_path = "best.pt"  # Your model,must be in .pt
+test_images_path = "/"  # path to your folder with image to testing 
+result_output_path = "/"  # path to your output folder
+
+Path(result_output_path).mkdir(parents=True, exist_ok=True)
+
+#load model with your weights
+model = YOLO(weights_path)  
+
+# prepare parameters to model 
+results = model.predict(
+    source=test_images_path,  # folder with image
+    imgsz=3072,              # size your photo, must be in 1:1, and is not important that you have other resolutions, 
+    conf=0.25,               # minimal predictuon confidence
+    save=False ,              # 
+    max_det = 2500,
+    iou=0.3 
+)
+
+
+total_objects_detected = 0
+
+for result in results:
+    if hasattr(result, 'path') and result.path:  
+        image_path = result.path
+
+        # Load original image
+        img = cv2.imread(str(image_path))
+        
+        # Total value detecion on image
+        num_objects = len(result.boxes) if result.boxes is not None else 0
+        total_objects_detected += num_objects
+
+        # Creating boxes and showing results 
+        for box in result.boxes:
+            conf = box.conf[0].item()  # Confidencial prediction level
+            if conf >= 0.25:  # 
+                x1, y1, x2, y2 = map(int, box.xyxy[0])  # coordinate boxes
+                label = f"Capsule {conf:.2f}"  # label with confidential 
+                cv2.rectangle(img, (x1, y1), (x2, y2), (0, 255, 0), 2)  # creating box
+                cv2.putText(img, label, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+
+        # adding numer objects on image
+        overlay = img.copy()
+        cv2.putText(overlay, f"Objects: {num_objects}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+        cv2.addWeighted(overlay, 0.3, img, 0.7, 0, img)
+
+        # save this results 
+        output_file = Path(result_output_path) / f"{Path(image_path).stem}_result.png"
+        cv2.imwrite(str(output_file), img)
+
+print(f"Total identificate number: {total_objects_detected}")
+print(f"Results save in: : {result_output_path}")
