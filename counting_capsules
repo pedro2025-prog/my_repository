@@ -1,0 +1,60 @@
+#this code in first part check all size in your folder (folder_path). 
+Second part code make resize your all file from folder_path to other folder output_folder. 
+Size is using to controling what kind of size you need to have. 
+
+
+import os
+from collections import defaultdict
+from PIL import Image
+import sys
+
+#path to folder 
+folder_path = ""
+
+# formats photo, you can add more 
+image_formats = (".jpg", ".jpeg", ".png")
+
+# dict to counting unique value your size photos 
+image_count = defaultdict(int)
+
+# iteration in each your folder 
+for root, dirs, files in os.walk(folder_path):
+    for file in files:
+        if file.lower().endswith(image_formats):
+            file_path = os.path.join(root, file)
+            try:
+                with Image.open(file_path) as img:
+                    size = img.size  #
+                    image_count[size] += 1
+            except Exception as e:
+                print(f"Problem with your  {file_path}: {e}")
+
+for size, count in image_count.items():
+    print(f"Size: {size}, photos:: {count}")
+
+
+#sys.exit()
+
+folder_path = "" #your target photo 
+output_folder = "square_5120" #your output foldet 
+resize_to = (5120, 5120)
+
+# if you not make folder, this line will  create new name folder take name from output_folder
+os.makedirs(output_folder, exist_ok=True)
+
+image_formats = (".jpg", ".jpeg", ".png")
+
+for root, dirs, files in os.walk(folder_path):
+    for file in files:
+        if file.lower().endswith(image_formats):
+            file_path = os.path.join(root, file)
+            try:
+                with Image.open(file_path) as img:
+                    resized_img = img.resize(resize_to, Image.Resampling.LANCZOS)
+                    output_path = os.path.join(output_folder, file)
+                    resized_img.save(output_path)
+                    print(f"Save: {output_path}")
+            except Exception as e:
+                print(f"Problem with your file {file_path}: {e}")
+
+print("Resize complete.")
