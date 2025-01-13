@@ -1,0 +1,41 @@
+import cv2
+import os
+from pathlib import Path
+
+# Path to the folder containing the result images
+result_output_path = "path_to_results_folder"  # Replace with the path to your folder with result images
+output_video_path = "path_to_output_video.avi"  # Replace with the desired output video file path
+
+# Video parameters
+frame_duration = 3  # Display duration for each image in seconds
+fps = 1 / frame_duration  # Frames per second
+
+# Get the list of images
+image_files = sorted(Path(result_output_path).glob("*.png"))  # Adjust the file extension if necessary
+if not image_files:
+    print("No images found in the folder.")
+    exit()
+
+# Open the first image to get its dimensions
+first_image = cv2.imread(str(image_files[0]))
+height, width, _ = first_image.shape
+
+# Create a video writer object
+fourcc = cv2.VideoWriter_fourcc(*"XVID")  # Video format (e.g., .avi)
+video_writer = cv2.VideoWriter(output_video_path, fourcc, fps, (width, height))
+
+# Iterate through the images and add them to the video
+for image_file in image_files:
+    image = cv2.imread(str(image_file))
+    if image is None:
+        print(f"Cannot read image: {image_file}")
+        continue
+    
+    # Repeat each frame `fps * frame_duration` times (e.g., for 3 seconds at fps=1/3, repeat 3 times)
+    for _ in range(int(fps * frame_duration)):
+        video_writer.write(image)
+
+# Finish writing the video
+video_writer.release()
+
+print(f"Video has been saved as: {output_video_path}")
