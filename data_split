@@ -1,0 +1,64 @@
+import os
+import shutil
+from sklearn.model_selection import train_test_split
+
+def split_dataset(images_path, labels_path, output_path, test_ratio=0.2):
+    """
+    Splits the dataset into training and testing sets while keeping image-label pairs together.
+
+    Parameters:
+    - images_path: Path to the folder containing images.
+    - labels_path: Path to the folder containing YOLO labels.
+    - output_path: Path to the output folder (train/test).
+    - test_ratio: Percentage of data allocated to the test set (e.g., 0.2 means 20% for testing).
+    """
+
+    # Create output directories
+    train_images_path = os.path.join(output_path, "train/images")
+    train_labels_path = os.path.join(output_path, "train/labels")
+    test_images_path = os.path.join(output_path, "test/images")
+    test_labels_path = os.path.join(output_path, "test/labels")
+
+    os.makedirs(train_images_path, exist_ok=True)
+    os.makedirs(train_labels_path, exist_ok=True)
+    os.makedirs(test_images_path, exist_ok=True)
+    os.makedirs(test_labels_path, exist_ok=True)
+
+    # Get the list of image files
+    image_files = [f for f in os.listdir(images_path) if f.endswith(".jpg")]
+    label_files = [f.replace('.jpg', '.txt') for f in image_files]
+
+    # Check if label files exist for each image
+    for label_file in label_files:
+        if not os.path.exists(os.path.join(labels_path, label_file)):
+            raise FileNotFoundError(f"Label file for the image {label_file} was not found.")
+
+    # Split into training and testing sets
+    train_images, test_images = train_test_split(image_files, test_size=test_ratio, random_state=42)
+
+    # Copy files to target folders
+    for image_file in train_images:
+        # Copy images
+        shutil.copy(os.path.join(images_path, image_file), os.path.join(train_images_path, image_file))
+        # Copy labels
+        label_file = image_file.replace('.jpg', '.txt')
+        shutil.copy(os.path.join(labels_path, label_file), os.path.join(train_labels_path, label_file))
+
+    for image_file in test_images:
+        # Copy images
+        shutil.copy(os.path.join(images_path, image_file), os.path.join(test_images_path, image_file))
+        # Copy labels
+        label_file = image_file.replace('.jpg', '.txt')
+        shutil.copy(os.path.join(labels_path, label_file), os.path.join(test_labels_path, label_file))
+
+    print(f"[INFO] Dataset split completed. Data saved in {output_path}")
+    print(f"Number of training images: {len(train_images)}")
+    print(f"Number of testing images: {len(test_images)}")
+
+# Paths to data
+images_path = "path_to_images"  # Replace with the actual path to your images folder
+labels_path = "path_to_labels"  # Replace with the actual path to your labels folder
+output_path = "path_to_output"  # Replace with the desired output folder path
+
+# Split the dataset
+split_dataset(images_path, labels_path, output_path, test_ratio=0.2)
